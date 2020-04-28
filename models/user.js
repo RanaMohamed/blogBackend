@@ -1,12 +1,15 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const util = require('util');
 const _ = require('lodash');
 var uniqueValidator = require('mongoose-unique-validator');
 
-const { saltRounds } = require('../config/config');
+const { saltRounds, jwtSecret } = require('../config/config');
+const { emailRegex } = require('../helpers/helper');
 
-// eslint-disable-next-line no-useless-escape
-const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const signJWT = util.promisify(jwt.sign);
+const verifyJWT = util.promisify(jwt.verify);
 
 const schema = new mongoose.Schema(
 	{
@@ -22,8 +25,8 @@ const schema = new mongoose.Schema(
 		},
 		password: {
 			type: String,
+			minlength: [8, 'Password should have a minimum length of 8'],
 			required: [true, 'Passowrd is required'],
-			// set: (v) => bcrypt.hashSync(v, saltRounds),
 		},
 		imgUrl: {
 			type: String,
@@ -49,9 +52,20 @@ schema.methods.checkPassword = function (plainPassword) {
 	return bcrypt.compare(plainPassword, currentDocument.password);
 };
 
+schema.methods.generateToken = function () {
+	const currentDocument = this;
+	return signJWT({ id: currentDocument.id }, jwtSecret);
+};
+
 schema.plugin(uniqueValidator, {
 	message: 'Email is already taken',
 });
+
+schema.statics.getUserFromToken = async function (token) {
+	const User = this;
+	const { id } = await verifyJWT(token, jwtSecret);
+	return User.findById(id);
+};
 
 const User = mongoose.model('User', schema);
 
