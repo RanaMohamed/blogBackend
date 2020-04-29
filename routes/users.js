@@ -47,7 +47,7 @@ router.get('/getUser', authenticate, async (req, res) => {
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const user = await User.findById(req.user._id);
 	Object.keys(req.body).map((key) => (user[key] = req.body[key]));
-	user.imgUrl = req.file.filename;
+	if (req.file) user.imgUrl = 'images/' + req.file.filename;
 	await user.save();
 	res.json({ message: 'User edited successfuly', user });
 });
