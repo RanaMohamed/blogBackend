@@ -1,6 +1,7 @@
 const express = require('express');
-
 const { body } = require('express-validator');
+
+const upload = require('../middlewares/upload');
 const { emailRegex } = require('../helpers/helper');
 const validateRequest = require('../middlewares/validateRequest');
 const authenticate = require('../middlewares/authenticate');
@@ -35,17 +36,20 @@ router.post(
 		if (!isMatched) throw new Error('Invalid email or password');
 
 		const token = await user.generateToken();
-		res.json({ message: 'User logged in successfully', user, token });
+		res.json({ user, token });
 	}
 );
 
 router.get('/getUser', authenticate, async (req, res) => {
-	res.json({ message: 'User logged in successfully', user: req.user });
+	res.json({ user: req.user });
 });
 
-router.patch('/', (req, res, next) => {
-	console.log(req);
-	next();
+router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
+	const user = await User.findById(req.user._id);
+	Object.keys(req.body).map((key) => (user[key] = req.body[key]));
+	user.imgUrl = req.file.filename;
+	await user.save();
+	res.json({ message: 'User edited successfuly', user });
 });
 
 router.delete('/', (req, res, next) => {
