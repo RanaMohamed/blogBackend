@@ -40,8 +40,10 @@ router.post(
 	}
 );
 
-router.get('/getUser', authenticate, async (req, res) => {
-	res.json({ user: req.user });
+router.get('/getUser/:id?', authenticate, async (req, res) => {
+	let user = req.user;
+	if (req.params.id) user = await User.findById(req.params.id);
+	res.json({ user });
 });
 
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {

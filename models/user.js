@@ -28,6 +28,9 @@ const schema = new mongoose.Schema(
 			minlength: [8, 'Password should have a minimum length of 8'],
 			required: [true, 'Passowrd is required'],
 		},
+		desc: {
+			type: String,
+		},
 		imgUrl: {
 			type: String,
 		},
@@ -41,7 +44,9 @@ const schema = new mongoose.Schema(
 	}
 );
 
-schema.pre('save', async function () {
+schema.pre('save', async function (next) {
+	const user = this;
+	if (!user.isModified('password')) return next();
 	const currentDocument = this;
 	const hashed = await bcrypt.hash(currentDocument.password, saltRounds);
 	currentDocument.password = hashed;
