@@ -23,8 +23,13 @@ router.get('/:id?', async (req, res) => {
 		res.json({ article });
 		return;
 	}
-	const articles = await Article.find().populate('author');
-	res.json({ articles });
+	const total = await Article.countDocuments();
+	const articles = await Article.find()
+		.sort({ updatedAt: -1 })
+		.skip((req.query.page - 1) * 5)
+		.limit(5)
+		.populate('author');
+	res.json({ total, articles });
 });
 
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
