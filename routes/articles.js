@@ -23,8 +23,10 @@ router.get('/:id?', async (req, res) => {
 		res.json({ article });
 		return;
 	}
-	const total = await Article.countDocuments();
-	const articles = await Article.find()
+
+	const filter = req.query.userId ? { author: req.query.userId } : {};
+	const total = await Article.countDocuments(filter);
+	const articles = await Article.find(filter)
 		.sort({ updatedAt: -1 })
 		.skip((req.query.page - 1) * 5)
 		.limit(5)
