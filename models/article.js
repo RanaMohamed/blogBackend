@@ -22,6 +22,7 @@ const schema = new mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
+			index: true,
 		},
 	},
 	{
@@ -31,6 +32,8 @@ const schema = new mongoose.Schema(
 		},
 	}
 );
+
+schema.index({ title: 'text', tags: 'text' });
 
 const Article = mongoose.model('Article', schema);
 

@@ -6,6 +6,7 @@ const authenticate = require('../middlewares/authenticate');
 const router = express.Router();
 
 const Article = require('../models/article');
+const User = require('../models/user');
 
 router.post('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const { title, body, tags } = req.body;
@@ -24,13 +25,22 @@ router.get('/:id?', async (req, res) => {
 		return;
 	}
 
-	const filter = req.query.userId ? { author: req.query.userId } : {};
+	const q = req.query.q;
+	let filter = req.query.userId ? { author: req.query.userId } : {};
+	if (q) {
+		let users = await User.find({ $text: { $search: q } });
+		users = users.map((u) => u.id);
+		filter = {
+			...filter,
+			$or: [{ $text: { $search: q } }, { author: users }],
+		};
+	}
 	const total = await Article.countDocuments(filter);
 	const articles = await Article.find(filter)
+		.populate('author')
 		.sort({ updatedAt: -1 })
 		.skip((req.query.page - 1) * 5)
-		.limit(5)
-		.populate('author');
+		.limit(5);
 	res.json({ total, articles });
 });
 

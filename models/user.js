@@ -72,6 +72,8 @@ schema.statics.getUserFromToken = async function (token) {
 	return User.findById(id);
 };
 
+schema.index({ name: 'text' });
+
 const User = mongoose.model('User', schema);
 
 module.exports = User;
