@@ -33,8 +33,8 @@ app.use(function (req, res, next) {
 
 app.use(function (err, req, res, next) {
 	console.log(err);
-	const status = res.statusCode == 401 ? 401 : 500;
-	const message = res.statusCode == 401 ? err.message : 'Something broke!';
+	const status = res.statusCode == 200 ? 500 : res.statusCode;
+	const message = res.statusCode == 200 ? 'Something broke!' : err.message;
 	res.status(status).json({
 		message,
 		errors: err,

@@ -14,7 +14,7 @@ router.post('/register', async (req, res) => {
 	const { name, email, password } = req.body;
 	const user = new User({ name, email, password });
 	await user.save();
-	res.json({ message: 'User registered successfully', user });
+	res.status(201).json({ message: 'User registered successfully', user });
 });
 
 router.post(
@@ -43,6 +43,7 @@ router.post(
 router.get('/getUser/:id?', authenticate, async (req, res) => {
 	let user = req.user;
 	if (req.params.id) user = await User.findById(req.params.id);
+	if (!user) res.status(404).json({ message: 'User not found' });
 	res.json({ user });
 });
 
@@ -51,7 +52,7 @@ router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	Object.keys(req.body).map((key) => (user[key] = req.body[key]));
 	if (req.file) user.imgUrl = 'images/' + req.file.filename;
 	await user.save();
-	res.json({ message: 'User edited successfuly', user });
+	res.status(201).json({ message: 'User edited successfuly', user });
 });
 
 router.delete('/', (req, res, next) => {
