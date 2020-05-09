@@ -54,7 +54,11 @@ router.get(
 );
 
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
-	const article = await Article.findById(req.user._id);
+	const article = await Article.findById(req.body._id);
+	if (article.author.toString() != req.user._id.toString()) {
+		res.status(403);
+		throw new Error('Unauthorized');
+	}
 	Object.keys(req.body).map((key) => (article[key] = req.body[key]));
 	if (req.file) article.imgUrl = 'images/' + req.file.filename;
 	await article.save();
