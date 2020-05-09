@@ -26,10 +26,10 @@ app.use(function (req, res, next) {
 	next();
 });
 
-app.use(function (req, res, next) {
-	console.info(req.path, req.method, req.params, req.query, req.body);
-	next();
-});
+// app.use(function (req, res, next) {
+// 	console.info(req.path, req.method, req.params, req.query, req.body);
+// 	next();
+// });
 
 app.use(function (err, req, res, next) {
 	console.log(err);

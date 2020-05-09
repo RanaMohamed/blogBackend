@@ -62,12 +62,17 @@ router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	Object.keys(req.body).map((key) => (article[key] = req.body[key]));
 	if (req.file) article.imgUrl = 'images/' + req.file.filename;
 	await article.save();
-	res.status(201).json({ message: 'Article edited successfuly', article });
+	res.status(201).json({ message: 'Article edited successfully', article });
 });
 
-router.delete('/', (req, res, next) => {
-	console.log(req);
-	next();
+router.delete('/:id', authenticate, async (req, res, next) => {
+	const article = await Article.findById(req.params.id);
+	if (!article || article.author.toString() !== req.user._id.toString()) {
+		res.status(403);
+		throw new Error('Unauthorized');
+	}
+	await Article.deleteOne({ _id: req.params.id });
+	res.status(201).json({ message: 'Article deleted successfully' });
 });
 
 module.exports = router;
