@@ -34,6 +34,10 @@ const schema = new mongoose.Schema(
 		imgUrl: {
 			type: String,
 		},
+		following: {
+			type: [mongoose.Schema.Types.ObjectId],
+			ref: 'User',
+		},
 	},
 	{
 		timestamps: true,

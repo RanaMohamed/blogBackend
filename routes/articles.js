@@ -17,6 +17,18 @@ router.post('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	res.status(201).json({ message: 'Article added successfully', article });
 });
 
+router.get('/followed', authenticate, async (req, res) => {
+	const total = await Article.countDocuments({
+		author: req.user.following,
+	});
+	const articles = await Article.find({ author: req.user.following })
+		.populate('author')
+		.sort({ updatedAt: -1 })
+		.skip((req.query.page - 1) * 5)
+		.limit(5);
+	res.json({ total, articles });
+});
+
 router.get(
 	'/:id?',
 	async (req, res, next) => {
@@ -65,7 +77,7 @@ router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	res.status(201).json({ message: 'Article edited successfully', article });
 });
 
-router.delete('/:id', authenticate, async (req, res, next) => {
+router.delete('/:id', authenticate, async (req, res) => {
 	const article = await Article.findById(req.params.id);
 	if (!article || article.author.toString() !== req.user._id.toString()) {
 		res.status(403);
