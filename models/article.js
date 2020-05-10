@@ -6,11 +6,11 @@ const schema = new mongoose.Schema(
 	{
 		title: {
 			type: String,
-			required: [true, 'Name is required'],
+			required: [true, 'Title is required'],
 		},
 		body: {
 			type: String,
-			required: [true, 'Email is required'],
+			required: [true, 'Body is required'],
 		},
 		tags: {
 			type: [String],

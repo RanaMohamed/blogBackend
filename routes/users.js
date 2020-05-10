@@ -1,5 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
+const cloudinary = require('cloudinary');
 
 const upload = require('../middlewares/upload');
 const { emailRegex } = require('../helpers/helper');
@@ -50,14 +51,16 @@ router.get('/getUser/:id?', authenticate, async (req, res) => {
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const user = await User.findById(req.user._id);
 	Object.keys(req.body).map((key) => (user[key] = req.body[key]));
-	if (req.file) user.imgUrl = 'images/' + req.file.filename;
+	if (req.file) {
+		const result = await cloudinary.v2.uploader.upload(req.file.path);
+		user.imgUrl = result.secure_url;
+	}
 	await user.save();
 	res.status(201).json({ message: 'User edited successfuly', user });
 });
 
 router.post('/follow/:id', authenticate, async (req, res) => {
 	const user = req.user;
-	console.log();
 	if (user.following.indexOf(req.params.id) !== -1) {
 		return res.status(400).json({ message: 'User already followed' });
 	}

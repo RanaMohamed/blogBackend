@@ -8,11 +8,16 @@ const router = express.Router();
 const Article = require('../models/article');
 const User = require('../models/user');
 
+const cloudinary = require('cloudinary');
+
 router.post('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const { title, body, tags } = req.body;
 	const article = new Article({ title, body, tags });
 	article.author = req.user._id;
-	if (req.file) article.imgUrl = 'images/' + req.file.filename;
+	if (req.file) {
+		const result = await cloudinary.v2.uploader.upload(req.file.path);
+		article.imgUrl = result.secure_url;
+	}
 	await article.save();
 	res.status(201).json({ message: 'Article added successfully', article });
 });
@@ -72,7 +77,10 @@ router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 		throw new Error('Unauthorized');
 	}
 	Object.keys(req.body).map((key) => (article[key] = req.body[key]));
-	if (req.file) article.imgUrl = 'images/' + req.file.filename;
+	if (req.file) {
+		const result = await cloudinary.v2.uploader.upload(req.file.path);
+		article.imgUrl = result.secure_url;
+	}
 	await article.save();
 	res.status(201).json({ message: 'Article edited successfully', article });
 });
