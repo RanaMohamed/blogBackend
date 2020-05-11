@@ -7,8 +7,8 @@ const app = express();
 require('express-async-errors');
 require('./db');
 
-const userRouter = require('./routes/users');
-const articleRouter = require('./routes/articles');
+const userRouter = require('./routes/user');
+const articleRouter = require('./routes/article');
 const { port } = require('./config/config');
 
 app.use(cors());
@@ -25,11 +25,6 @@ app.use(function (req, res, next) {
 	res.status(404).send("Sorry can't find that!");
 	next();
 });
-
-// app.use(function (req, res, next) {
-// 	console.info(req.path, req.method, req.params, req.query, req.body);
-// 	next();
-// });
 
 app.use(function (err, req, res, next) {
 	console.log(err);

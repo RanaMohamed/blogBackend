@@ -2,6 +2,7 @@ const express = require('express');
 
 const upload = require('../middlewares/upload');
 const authenticate = require('../middlewares/authenticate');
+const { getArticles } = require('../controllers/article');
 
 const router = express.Router();
 
@@ -14,40 +15,37 @@ router.post('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const { title, body, tags } = req.body;
 	const article = new Article({ title, body, tags });
 	article.author = req.user._id;
+
 	if (req.file) {
 		const result = await cloudinary.v2.uploader.upload(req.file.path);
 		article.imgUrl = result.secure_url;
 	}
+
 	await article.save();
+
 	res.status(201).json({ message: 'Article added successfully', article });
 });
 
 router.get('/followed', authenticate, async (req, res) => {
-	const total = await Article.countDocuments({
-		author: req.user.following,
-	});
-	const articles = await Article.find({ author: req.user.following })
-		.populate('author')
-		.sort({ updatedAt: -1 })
-		.skip((req.query.page - 1) * 5)
-		.limit(5);
-	res.json({ total, articles });
+	const data = await getArticles(
+		{ author: req.user.following },
+		req.query.page
+	);
+
+	res.json(data);
 });
 
 router.get(
 	'/:id?',
-	async (req, res, next) => {
-		if (req.query.q) {
-			return await authenticate(req, res, next);
-		}
+	(req, res, next) => {
+		if (req.query.q) return authenticate(req, res, next);
 		next();
 	},
 	async (req, res) => {
 		const id = req.params.id;
 		if (id) {
 			const article = await Article.findById(id).populate('author');
-			res.json({ article });
-			return;
+			return res.json({ article });
 		}
 
 		const q = req.query.q;
@@ -60,38 +58,38 @@ router.get(
 				$or: [{ $text: { $search: q } }, { author: users }],
 			};
 		}
-		const total = await Article.countDocuments(filter);
-		const articles = await Article.find(filter)
-			.populate('author')
-			.sort({ updatedAt: -1 })
-			.skip((req.query.page - 1) * 5)
-			.limit(5);
-		res.json({ total, articles });
+
+		const data = await getArticles(filter, req.query.page);
+		res.json(data);
 	}
 );
 
 router.patch('/', authenticate, upload.single('imgUrl'), async (req, res) => {
 	const article = await Article.findById(req.body._id);
-	if (article.author.toString() != req.user._id.toString()) {
-		res.status(403);
-		throw new Error('Unauthorized');
-	}
+
+	if (article.author.toString() != req.user._id.toString())
+		return res.status(403).json({ message: 'Unauthorized' });
+
 	Object.keys(req.body).map((key) => (article[key] = req.body[key]));
+
 	if (req.file) {
 		const result = await cloudinary.v2.uploader.upload(req.file.path);
 		article.imgUrl = result.secure_url;
 	}
+
 	await article.save();
+
 	res.status(201).json({ message: 'Article edited successfully', article });
 });
 
 router.delete('/:id', authenticate, async (req, res) => {
 	const article = await Article.findById(req.params.id);
-	if (!article || article.author.toString() !== req.user._id.toString()) {
-		res.status(403);
-		throw new Error('Unauthorized');
-	}
+
+	if (!article || article.author.toString() !== req.user._id.toString())
+		return res.status(403).json({ message: 'Unauthorized' });
+
 	await Article.deleteOne({ _id: req.params.id });
+
 	res.status(201).json({ message: 'Article deleted successfully' });
 });
 

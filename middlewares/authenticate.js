@@ -5,10 +5,8 @@ module.exports = async (req, res, next) => {
 		let user;
 		if (req.headers.authorization)
 			user = await User.getUserFromToken(req.headers.authorization);
-		if (!user) {
-			res.status(401);
-			throw new Error('Unauthorized');
-		}
+
+		if (!user) return res.status(401).json({ message: 'Unauthorized' });
 
 		req.user = user;
 		next();
